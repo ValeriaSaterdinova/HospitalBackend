@@ -1,4 +1,5 @@
 const User = require('../../db/models/user/user');
+const Reception = require('../../db/reception/reception');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { secret } = require('../config/config');
@@ -10,6 +11,7 @@ const createToken = (id) => {
   return jwt.sign(payload, secret, { expiresIn: '24' });
 };
 
+// User controller 
 module.exports.createNewUser = async (req, res) => {
   if (req.body.hasOwnProperty('login') && req.body.hasOwnProperty('password')); {
     try {
@@ -21,7 +23,7 @@ module.exports.createNewUser = async (req, res) => {
         const hashPassword = bcrypt.hashSync(password, 8);
         const user = new User({ login, password: hashPassword });
         const token = createToken(user._id);
-        await user.save().then(result => {res.status(200).send({ data: 'User is registered', token })});
+        await user.save().then(result => { res.status(200).send({ data: 'User is registered', token }) });
       }
     } catch (error) {
       console.log(error);
@@ -51,4 +53,81 @@ module.exports.userAuthorization = async (req, res) => {
       res.status(422).send('Incorrect parameters');
     }
   }
+};
+
+// Reception controller 
+
+module.exports.getAllReceptions = (req, res) => {
+  Reception.find().then(result => {
+    res.send({ data: result });
+  }).catch(err => {
+    res.status(422).send('Incorrect parameters');
+  });
+};
+
+module.exports.createNewReception = (req, res) => {
+  if (
+    req.body.hasOwnProperty('name') &&
+    req.body.hasOwnProperty('doctor') &&
+    req.body.hasOwnProperty('data') &&
+    req.body.hasOwnProperty('complaint')
+  ) {
+    const reception = new Reception(req.body);
+    reception.save().then(result => {
+      res.send({ data: result });
+    }).catch(err => {
+      res.status(422).send('Incorrect parameters');
+    });
+  } else {
+    res.status(422).send('Incorrect parameters');
+  };
+};
+
+module.exports.createNewReception = (req, res) => {
+  if (
+    req.body.hasOwnProperty('name') &&
+    req.body.hasOwnProperty('doctor') &&
+    req.body.hasOwnProperty('data') &&
+    req.body.hasOwnProperty('complaint')
+  ) {
+    const reception = new Reception(req.body);
+    reception.save().then(result => {
+      res.send({ data: result });
+    }).catch(err => {
+      res.status(422).send('Incorrect parameters');
+    });
+  } else {
+    res.status(422).send('Incorrect parameters');
+  };
+};
+
+module.exports.changeReceptionInfo = (req, res) => {
+  if (req.body.hasOwnProperty('_id') &&
+    (req.body.hasOwnProperty('name') ||
+      req.body.hasOwnProperty('doctor') ||
+      req.body.hasOwnProperty('data') ||
+      req.body.hasOwnProperty('complaint'))
+  ) {
+    Reception.updateOne({ _id: req.body._id }, req.body).then(result => {
+      Reception.find({ _id: req.body._id }).then(result => {
+        res.send({ data: result });
+      }).catch(err => {
+        res.status(422).send('Incorrect parameters');
+      });
+    });
+  } else {
+    res.status(422).send('Incorrect parameters');
+  };
+};
+
+module.exports.deleteReception = (req, res) => {
+  if (req.query.hasOwnProperty('_id')) {
+    Reception.deleteOne({_id: req.query._id}).then(result => {
+      res.send('Reception deleted');
+    }).catch(err => {
+      res.status(422).send('Incorrect parameters');
+    });
+  } else {
+    res.status(422).send('Incorrect parameters');
+  };
 };
