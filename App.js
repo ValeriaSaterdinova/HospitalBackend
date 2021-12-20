@@ -6,15 +6,15 @@ const app = express();
 const { Schema } = mongoose;
 
 const logShema = new Schema({
-    login: String,
-    password: String
+  login: String,
+  password: String
 });
 
 const reсShema = new Schema({
-    name: String,
-    doctor: String,
-    data: String,
-    complaint: String
+  name: String,
+  doctor: String,
+  data: String,
+  complaint: String
 });
 
 const Reception = mongoose.model("reseptions", reсShema);
