@@ -3,10 +3,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { secret } = require('../config/config');
 
-createToken = (id) => {
+const createToken = (id) => {
   const payload = {
     id
-  }
+  };
   return jwt.sign(payload, secret, { expiresIn: '24' });
 };
 
@@ -20,7 +20,8 @@ module.exports.createNewUser = async (req, res) => {
       } else {
         const hashPassword = bcrypt.hashSync(password, 8);
         const user = new User({ login, password: hashPassword });
-        await user.save().then(result => res.status(200).send('User is registered'));
+        const token = createToken(user._id);
+        await user.save().then(result => {res.status(200).send({ data: 'User is registered', token })});
       }
     } catch (error) {
       console.log(error);
@@ -29,17 +30,17 @@ module.exports.createNewUser = async (req, res) => {
   }
 };
 
-module.exports.createUserAuthorization = async (req, res) => {
+module.exports.userAuthorization = async (req, res) => {
   if (req.body.hasOwnProperty('login') && req.body.hasOwnProperty('password')); {
     try {
       const { login, password } = req.body;
       const user = await User.findOne({ login });
       if (!user) {
-        return res.status(422).send('User is not found');
+        return res.status(404).send('User is not found');
       } else {
         const validPassword = bcrypt.compareSync(password, user.password);
         if (!validPassword) {
-          return res.status(422).send('Invalid password');
+          return res.status(404).send('Invalid password');
         } else {
           const token = createToken(user._id);
           return res.status(200).send({ token });
