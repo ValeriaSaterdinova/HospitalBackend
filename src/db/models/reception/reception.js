@@ -6,7 +6,8 @@ const reсShema = new Schema({
     name: String,
     doctor: String,
     data: String,
-    complaint: String
+    complaint: String,
+    userId:String
   });
 
 module.exports = Reception = mongoose.model("reseptions", reсShema);
