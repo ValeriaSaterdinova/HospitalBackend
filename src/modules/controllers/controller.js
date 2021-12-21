@@ -58,46 +58,40 @@ module.exports.userAuthorization = async (req, res) => {
 // Reception controller 
 
 module.exports.getAllReceptions = (req, res) => {
-  Reception.find().then(result => {
-    res.send({ data: result });
-  }).catch(err => {
-    res.status(422).send('Incorrect parameters');
-  });
-};
-
-module.exports.createNewReception = (req, res) => {
-  if (
-    req.body.hasOwnProperty('name') &&
-    req.body.hasOwnProperty('doctor') &&
-    req.body.hasOwnProperty('data') &&
-    req.body.hasOwnProperty('complaint')
-  ) {
-    const reception = new Reception(req.body);
-    reception.save().then(result => {
+  const { token } = req.headers;
+  if (!token) {
+    return res.status(404).send('User is not registered');
+  } else {
+    const decoded = jwt.verify(token, secret)
+    Reception.find({ userId: decoded.id }).then(result => {
       res.send({ data: result });
     }).catch(err => {
       res.status(422).send('Incorrect parameters');
     });
-  } else {
-    res.status(422).send('Incorrect parameters');
-  };
+  }
 };
 
 module.exports.createNewReception = (req, res) => {
-  if (
-    req.body.hasOwnProperty('name') &&
-    req.body.hasOwnProperty('doctor') &&
-    req.body.hasOwnProperty('data') &&
-    req.body.hasOwnProperty('complaint')
-  ) {
-    const reception = new Reception(req.body);
-    reception.save().then(result => {
-      res.send({ data: result });
-    }).catch(err => {
-      res.status(422).send('Incorrect parameters');
-    });
+  const { token } = req.headers;
+  if (!token) {
+    return res.status(404).send('User is not registered');
   } else {
-    res.status(422).send('Incorrect parameters');
+    if (
+      req.body.hasOwnProperty('name') &&
+      req.body.hasOwnProperty('doctor') &&
+      req.body.hasOwnProperty('data') &&
+      req.body.hasOwnProperty('complaint')
+    ) {
+      req.body.userId = decoded.id;
+      const reception = new Reception(req.body);
+      reception.save().then(result => {
+        res.send({ data: result });
+      }).catch(err => {
+        res.status(422).send('Incorrect parameters');
+      });
+    } else {
+      res.status(422).send('Incorrect parameters');
+    };
   };
 };
 
@@ -122,12 +116,10 @@ module.exports.changeReceptionInfo = (req, res) => {
 
 module.exports.deleteReception = (req, res) => {
   if (req.query.hasOwnProperty('_id')) {
-    Reception.deleteOne({_id: req.query._id}).then(result => {
+    Reception.deleteOne({ _id: req.query._id }).then(result => {
       res.send('Reception deleted');
-    }).catch(err => {
-      res.status(422).send('Incorrect parameters');
     });
   } else {
-    res.status(422).send('Incorrect parameters');
+    res.status(404).send('Incorrect parameters');
   };
 };
