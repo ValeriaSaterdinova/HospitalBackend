@@ -104,11 +104,12 @@ module.exports.changeReceptionInfo = (req, res) => {
     if (req.body.hasOwnProperty('_id') &&
       (req.body.hasOwnProperty('name') ||
         req.body.hasOwnProperty('doctor') ||
-        req.body.hasOwnProperty('data') ||
-        req.body.hasOwnProperty('complaint'))
+        req.body.hasOwnProperty('date') ||
+        req.body.hasOwnProperty('complaints'))
     ) {
+      const decoded = jwt.verify(token, secret);
       Reception.updateOne({ _id: req.body._id }, req.body).then(result => {
-        Reception.find({ _id: req.body._id }).then(result => {
+        Reception.find({ userId: decoded.id }).then(result => {
           res.send({ data: result });
         }).catch(err => {
           res.status(422).send('Incorrect parameters');
@@ -118,7 +119,7 @@ module.exports.changeReceptionInfo = (req, res) => {
       res.status(422).send('Incorrect parameters');
     };
   };
-};
+}
 
 module.exports.deleteReception = (req, res) => {
   const { token } = req.headers;
