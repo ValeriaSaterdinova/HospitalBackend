@@ -8,7 +8,7 @@ const createToken = (id) => {
   const payload = {
     id
   };
-  return jwt.sign(payload, secret, { expiresIn: '24' });
+  return jwt.sign(payload, secret);
 };
 
 // User controller 
@@ -62,7 +62,7 @@ module.exports.getAllReceptions = (req, res) => {
   if (!token) {
     return res.status(404).send('User is not registered');
   } else {
-    const decoded = jwt.verify(token, secret)
+    const decoded = jwt.verify(token, secret);
     Reception.find({ userId: decoded.id }).then(result => {
       res.send({ data: result });
     }).catch(err => {
@@ -79,9 +79,10 @@ module.exports.createNewReception = (req, res) => {
     if (
       req.body.hasOwnProperty('name') &&
       req.body.hasOwnProperty('doctor') &&
-      req.body.hasOwnProperty('data') &&
-      req.body.hasOwnProperty('complaint')
+      req.body.hasOwnProperty('date') &&
+      req.body.hasOwnProperty('complaints')
     ) {
+      const decoded = jwt.verify(token, secret);
       req.body.userId = decoded.id;
       const reception = new Reception(req.body);
       reception.save().then(result => {
@@ -96,30 +97,45 @@ module.exports.createNewReception = (req, res) => {
 };
 
 module.exports.changeReceptionInfo = (req, res) => {
-  if (req.body.hasOwnProperty('_id') &&
-    (req.body.hasOwnProperty('name') ||
-      req.body.hasOwnProperty('doctor') ||
-      req.body.hasOwnProperty('data') ||
-      req.body.hasOwnProperty('complaint'))
-  ) {
-    Reception.updateOne({ _id: req.body._id }, req.body).then(result => {
-      Reception.find({ _id: req.body._id }).then(result => {
-        res.send({ data: result });
-      }).catch(err => {
-        res.status(422).send('Incorrect parameters');
-      });
-    });
+  const { token } = req.headers;
+  if (!token) {
+    return res.status(404).send('User is not registered');
   } else {
-    res.status(422).send('Incorrect parameters');
+    if (req.body.hasOwnProperty('_id') &&
+      (req.body.hasOwnProperty('name') ||
+        req.body.hasOwnProperty('doctor') ||
+        req.body.hasOwnProperty('data') ||
+        req.body.hasOwnProperty('complaint'))
+    ) {
+      Reception.updateOne({ _id: req.body._id }, req.body).then(result => {
+        Reception.find({ _id: req.body._id }).then(result => {
+          res.send({ data: result });
+        }).catch(err => {
+          res.status(422).send('Incorrect parameters');
+        });
+      });
+    } else {
+      res.status(422).send('Incorrect parameters');
+    };
   };
 };
 
 module.exports.deleteReception = (req, res) => {
-  if (req.query.hasOwnProperty('_id')) {
-    Reception.deleteOne({ _id: req.query._id }).then(result => {
-      res.send('Reception deleted');
-    });
+  const { token } = req.headers;
+  if (!token) {
+    return res.status(404).send('User is not registered');
   } else {
-    res.status(404).send('Incorrect parameters');
+    if (req.query.hasOwnProperty('_id')) {
+      const decoded = jwt.verify(token, secret);
+      Reception.deleteOne({ _id: req.query._id }).then(result => {
+        Reception.find({ userId: decoded.id }).then(result => {
+          res.send({ data: result });
+        }).catch(err => {
+          res.status(422).send(err);
+        });
+      });
+    } else {
+      res.status(422).send('Incorrect parameters');
+    };
   };
-};
+}
